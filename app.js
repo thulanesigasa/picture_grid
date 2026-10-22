@@ -151,7 +151,7 @@ function downloadPhotoStrip() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `puzzlecam_tira_${Date.now()}.png`;
+    link.download = `picture_grid_strip_${Date.now()}.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -170,7 +170,7 @@ function resetEverything() {
   hideStripComplete();
   updateStripDownloadAvailability();
   resetPuzzleOnly();
-  statusText.textContent = "todo reiniciado";
+  statusText.textContent = "all reset";
 }
 
 function renderGalleryThumb(snapshotCanvas, index) {
@@ -271,7 +271,7 @@ async function initHandLandmarker() {
         "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
       ),
       LOAD_TIMEOUT_MS,
-      "Tiempo de espera agotado cargando el runtime de MediaPipe (WASM). Revisa tu conexión a internet o si cdn.jsdelivr.net está bloqueado."
+      "Timed out loading MediaPipe (WASM) runtime. Check your internet connection or whether cdn.jsdelivr.net is blocked."
     );
   } catch (err) {
     throw err;
@@ -292,11 +292,11 @@ async function initHandLandmarker() {
         minTrackingConfidence: 0.6,
       }),
       LOAD_TIMEOUT_MS,
-      "Tiempo de espera agotado descargando el modelo HandLandmarker (~10MB) con GPU."
+      "Timed out downloading HandLandmarker model (~10MB) with GPU."
     );
     return handLandmarker;
   } catch (gpuErr) {
-    console.warn("[PuzzleCam] Falló con delegate GPU, reintentando con CPU…", gpuErr);
+    console.warn("[PictureGrid] Failed with GPU delegate, retrying with CPU...", gpuErr);
   }
 
   try {
@@ -314,7 +314,7 @@ async function initHandLandmarker() {
         minTrackingConfidence: 0.6,
       }),
       LOAD_TIMEOUT_MS,
-      "Tiempo de espera agotado descargando el modelo HandLandmarker (~10MB) incluso con CPU. Revisa tu conexión o si storage.googleapis.com está bloqueado en tu red."
+      "Timed out downloading HandLandmarker model (~10MB) even with CPU. Check your connection or whether storage.googleapis.com is blocked on your network."
     );
     return handLandmarker;
   } catch (cpuErr) {
@@ -419,7 +419,7 @@ function drawCountdownOverlay(box) {
   ctx.fillText(String(n), cx, cy);
   ctx.restore();
 
-  statusText.textContent = `capturando en ${n}…`;
+  statusText.textContent = `capturing in ${n}...`;
 }
 
 function gaussianNoise(std) {
@@ -763,7 +763,7 @@ function drawBoardAndPieces() {
     ctx.fillStyle = "#5fae6e";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("¡COMPLETO! — puño para guardar", box.x + box.width / 2, box.y + box.height / 2);
+    ctx.fillText("COMPLETE! • hold fist to save", box.x + box.width / 2, box.y + box.height / 2);
     ctx.restore();
   }
 }
@@ -774,7 +774,7 @@ function updateProgressBadge() {
     return;
   }
   const placedCount = puzzle.pieces.filter((p) => p.placed).length;
-  progressText.textContent = `${placedCount} / ${puzzle.pieces.length} piezas colocadas`;
+  progressText.textContent = `${placedCount} / ${puzzle.pieces.length} pieces placed`;
   progressBadge.classList.add("visible");
   progressBadge.classList.toggle("solved", puzzle.solved);
 }
@@ -964,7 +964,7 @@ function finishShatter() {
   shatter.fragments = [];
   if (shatter.pendingCanvas) {
     addToGallery(shatter.pendingCanvas);
-    statusText.textContent = "¡guardado en la tira!";
+    statusText.textContent = "saved to strip!";
     shatter.pendingCanvas = null;
   }
   resetPuzzleOnly();
@@ -972,7 +972,7 @@ function finishShatter() {
 
 function handleFistReset() {
   if (appState !== "puzzle") {
-    statusText.textContent = "reiniciado (puño)";
+    statusText.textContent = "reset (fist)";
     resetPuzzleOnly();
     return;
   }
@@ -984,7 +984,7 @@ function handleFistReset() {
     shatter.pendingCanvas = puzzle.fullPhotoboothCanvas;
     startShatter(puzzle.fullPhotoboothCanvas, puzzle.boardBox);
   } else {
-    statusText.textContent = "reiniciado (puño)";
+    statusText.textContent = "reset (fist)";
     resetPuzzleOnly();
   }
 }
@@ -995,7 +995,7 @@ let fistHoldCounter = 0;
 function processResults(result) {
   if (appState === "shattering") {
     updateAndDrawShatter();
-    statusText.textContent = "guardando…";
+    statusText.textContent = "saving...";
     return;
   }
 
@@ -1018,8 +1018,8 @@ function processResults(result) {
         drawLiveFrameOverlay(lastSeenFrame.box);
       }
       statusText.textContent = isStripFull()
-        ? "tira completa — descarga o reinicia"
-        : "buscando manos…";
+        ? "strip complete — download or reset"
+        : "looking for hands...";
       return;
     }
 
@@ -1033,8 +1033,8 @@ function processResults(result) {
       updateProgressBadge();
       drawBoardAndPieces();
       statusText.textContent = puzzle.solved
-        ? "¡rompecabezas completo! cierra el puño para guardarlo"
-        : "arma el rompecabezas con pinch";
+        ? "picture complete! hold closed fist to save"
+        : "assemble the picture with pinch gestures";
       return;
     }
 
@@ -1058,7 +1058,7 @@ function processResults(result) {
 
   if (appState === "tracking") {
     if (isStripFull()) {
-      statusText.textContent = "tira completa — descarga o reinicia";
+      statusText.textContent = "strip complete — download or reset";
       return;
     }
     if (handsLandmarks.length === 2) {
@@ -1081,7 +1081,7 @@ function processResults(result) {
           freezeGate.since = performance.now();
         }
         statusDot.className = "status-dot armed";
-        statusText.textContent = "sostén el pinch…";
+        statusText.textContent = "hold pinch...";
 
         if (performance.now() - freezeGate.since > FREEZE_HOLD_MS) {
           freezeGate.holding = false;
@@ -1089,7 +1089,7 @@ function processResults(result) {
         }
       } else {
         freezeGate.holding = false;
-        statusText.textContent = "manos en seguimiento";
+        statusText.textContent = "tracking hands";
       }
     } else {
       freezeGate.holding = false;
@@ -1097,9 +1097,9 @@ function processResults(result) {
       if (lastSeenFrame.box && sinceLastSeen < FRAME_GRACE_MS) {
         applyBWInsideBox(lastSeenFrame.box);
         drawLiveFrameOverlay(lastSeenFrame.box);
-        statusText.textContent = "manos en seguimiento";
+        statusText.textContent = "tracking hands";
       } else {
-        statusText.textContent = "manos en seguimiento";
+        statusText.textContent = "tracking hands";
       }
     }
     return;
@@ -1134,9 +1134,9 @@ function processResults(result) {
 
     statusText.textContent = puzzle.solved
       ? (fistHoldCounter > 0
-          ? `guardando… sostén el puño (${fistHoldCounter}/${FIST_HOLD_FRAMES})`
-          : "¡rompecabezas completo! cierra el puño para guardarlo")
-      : "arma el rompecabezas con pinch";
+          ? `saving... hold fist (${fistHoldCounter}/${FIST_HOLD_FRAMES})`
+          : "picture complete! hold closed fist to save")
+      : "assemble the picture with pinch gestures";
   }
 }
 
@@ -1164,7 +1164,7 @@ function showLoaderError(message) {
 function resetLoaderUI() {
   loadingOverlay.classList.remove("hidden");
   loaderText.style.color = "";
-  loaderText.textContent = "cargando modelo HandLandmarker…";
+  loaderText.textContent = "loading HandLandmarker model...";
   loaderRetry.classList.add("hidden");
   errorBanner.style.display = "none";
 }
@@ -1176,7 +1176,7 @@ async function boot() {
   const watchdogMs = (LOAD_TIMEOUT_MS * 2) + 5000;
   const watchdog = setTimeout(() => {
     if (!settled) {
-      showLoaderError("La carga está tardando demasiado. Pulsa reintentar o revisa tu conexión.");
+      showLoaderError("Loading is taking too long. Click retry or check your connection.");
     }
   }, watchdogMs);
 
@@ -1190,17 +1190,17 @@ async function boot() {
     settled = true;
     clearTimeout(watchdog);
     loadingOverlay.classList.add("hidden");
-    statusText.textContent = "listo";
+    statusText.textContent = "ready";
     requestAnimationFrame(renderLoop);
   } catch (err) {
     settled = true;
     clearTimeout(watchdog);
     if (err && err.name === "NotAllowedError") {
-      showLoaderError("Permiso de cámara denegado. Habilítalo en la configuración del navegador y pulsa reintentar.");
+      showLoaderError("Camera permission denied. Enable it in browser settings and click retry.");
     } else if (err && err.name === "NotFoundError") {
-      showLoaderError("No se encontró ninguna webcam disponible.");
+      showLoaderError("No available webcam found.");
     } else {
-      showLoaderError((err && err.message) || "Error iniciando la app.");
+      showLoaderError((err && err.message) || "Error starting the application.");
     }
   }
 }
@@ -1217,7 +1217,7 @@ if (downloadStripBtn) {
 if (resetAllBtn) {
   resetAllBtn.addEventListener("click", () => {
     const confirmed = window.confirm(
-      "¿Seguro que quieres borrar toda la tira de fotos y empezar de nuevo?"
+      "Are you sure you want to clear the entire photo strip and start over?"
     );
     if (confirmed) resetEverything();
   });
